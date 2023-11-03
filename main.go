@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -106,6 +107,23 @@ func main() {
 
 	r.Get("/status/400", func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+	})
+
+	// Random JSON endpoint
+	r.Get("/json/random", func(w http.ResponseWriter, r *http.Request) {
+		// Generate random values of different types
+		rand.Seed(time.Now().UnixNano())
+		response := map[string]interface{}{
+			"randomInt":    rand.Intn(100),                                           // Random integer
+			"randomFloat":  rand.Float64(),                                           // Random float
+			"randomBool":   rand.Intn(2) == 1,                                        // Random boolean
+			"randomString": shared.RandomString(10),                                  // Random string
+			"randomArray":  shared.RandomArray(5),                                    // Random array
+			"randomObject": map[string]int{"a": rand.Intn(100), "b": rand.Intn(100)}, // Random object/map
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	})
 
 	r.Get("/status/401", func(w http.ResponseWriter, r *http.Request) {
