@@ -5,7 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -108,6 +110,23 @@ func main() {
 
 	r.Get("/status/503", func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+	})
+
+	// Cookie random endpoint
+	r.Get("/cookie/random", func(w http.ResponseWriter, r *http.Request) {
+		// Generate a random number as the cookie value
+		rand.Seed(time.Now().UnixNano())
+		randomValue := fmt.Sprintf("%d", rand.Intn(1000000))
+
+		// Set the cookie to the response
+		http.SetCookie(w, &http.Cookie{
+			Name:    "Random-Cookie",
+			Value:   randomValue,
+			Expires: time.Now().Add(24 * time.Hour),
+			Path:    "/",
+		})
+
+		w.Write([]byte("Random cookie set"))
 	})
 
 	ip4, _ := PublicIP()
