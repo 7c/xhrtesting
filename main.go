@@ -1,15 +1,30 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-resty/resty/v2"
 )
 
 var addr = flag.String("addr", ":8080", "HTTP network address")
+
+func PublicIP() (string, error) {
+	client := resty.New()
+	resp, err := client.R().Get("https://ip4.ip8.com")
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode() == 200 {
+		return string(resp.Body()), nil
+	}
+	return "", errors.New("Error: " + resp.Status())
+}
 
 func main() {
 	flag.Parse() // Parse the command line flags
@@ -95,5 +110,8 @@ func main() {
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 	})
 
+	ip4, _ := PublicIP()
+	fmt.Printf("Your external IP is : %s\n", ip4)
+	fmt.Printf("Launching xhrtesting server at %s\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, r))
 }
