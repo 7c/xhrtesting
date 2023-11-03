@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"xhrtesting/shared"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,6 +17,7 @@ import (
 )
 
 var addr = flag.String("addr", ":8080", "HTTP network address")
+var tlsDomain = flag.String("tlsdomain", "", "Letsencrypt TLS Domain")
 
 func PublicIP() (string, error) {
 	client := resty.New()
@@ -157,6 +159,19 @@ func main() {
 
 	ip4, _ := PublicIP()
 	fmt.Printf("Your external IP is : %s\n", ip4)
-	fmt.Printf("Launching xhrtesting server at %s\n", *addr)
+
+	if *tlsDomain != "" {
+		fmt.Printf("HTTPS Mode\n")
+		fmt.Printf("TLS Domain '%s' enabled\n", *tlsDomain)
+		cert, keyFile := shared.LECerts(*tlsDomain)
+		if cert == "" || keyFile == "" {
+			log.Fatalln("Could not find cert,keyfiles from TLS Domain")
+		}
+		fmt.Printf("Listening on https://%s\n", *addr)
+		log.Fatal(http.ListenAndServeTLS(*addr, cert, keyFile, r))
+	}
+	fmt.Printf("HTTP Mode\n")
+	fmt.Printf("Listening on http://%s\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, r))
+
 }
