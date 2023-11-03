@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -127,6 +128,31 @@ func main() {
 		})
 
 		w.Write([]byte("Random cookie set"))
+	})
+
+	// Cookie random endpoint for setting a specified number of cookies
+	r.Get("/cookie/random/{number}", func(w http.ResponseWriter, r *http.Request) {
+		// Get the number from the URL parameter
+		numberStr := chi.URLParam(r, "number")
+		number, err := strconv.Atoi(numberStr)
+		if err != nil {
+			http.Error(w, "Invalid number of cookies", http.StatusBadRequest)
+			return
+		}
+
+		// Generate and set the specified number of cookies
+		for i := 0; i < number; i++ {
+			randomValue := fmt.Sprintf("%d", rand.Intn(1000000))
+			cookie := &http.Cookie{
+				Name:    fmt.Sprintf("Random-Cookie-%d", i+1),
+				Value:   randomValue,
+				Expires: time.Now().Add(24 * time.Hour),
+				Path:    "/",
+			}
+			http.SetCookie(w, cookie)
+		}
+
+		w.Write([]byte(fmt.Sprintf("Set %d random cookies", number)))
 	})
 
 	ip4, _ := PublicIP()
