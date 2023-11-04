@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 	"xhrtesting/shared"
 
@@ -45,7 +46,7 @@ func main() {
 		// []string{"https://foo.com", "https://bar.com"}
 		AllowedOrigins: []string{"*"},
 		// AllowedMethods is a list of methods the client is allowed to use with cross-domain requests.
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		// AllowedHeaders is list of non simple headers the client is allowed to use with cross-domain requests.
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		// ExposedHeaders indicates which headers are safe to expose to the API of a CORS API specification
@@ -107,6 +108,27 @@ func main() {
 
 	r.HandleFunc("/status/400", func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+	})
+
+	// long body response
+	r.HandleFunc("/long/body/{number}", func(w http.ResponseWriter, r *http.Request) {
+		numberStr := chi.URLParam(r, "number")
+		number, err := strconv.Atoi(numberStr)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		// Ensure the number is non-negative
+		if number < 0 {
+			http.Error(w, "Number must be non-negative", http.StatusBadRequest)
+			return
+		}
+
+		// Create a string that is 'number' characters long
+		longString := strings.Repeat("x", number)
+
+		w.Write([]byte(longString))
 	})
 
 	// Random JSON endpoint
