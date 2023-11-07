@@ -11,11 +11,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"xhrtesting/handlers"
+	mw "xhrtesting/middleware"
 	"xhrtesting/shared"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -39,76 +40,41 @@ func main() {
 
 	r := chi.NewRouter()
 
-	// Setup CORS options
-	corsMiddleware := cors.New(cors.Options{
-		// AllowedOrigins is a list of origins a cross-domain request can be executed from.
-		// Use "*" to allow all origins. To allow specific origins, use a list like the following:
-		// []string{"https://foo.com", "https://bar.com"}
-		AllowedOrigins: []string{"*"},
-		// AllowedMethods is a list of methods the client is allowed to use with cross-domain requests.
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		// AllowedHeaders is list of non simple headers the client is allowed to use with cross-domain requests.
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		// ExposedHeaders indicates which headers are safe to expose to the API of a CORS API specification
-		ExposedHeaders: []string{},
-		// AllowCredentials indicates whether the request can include user credentials like
-		// cookies, HTTP authentication or client side SSL certificates.
-		AllowCredentials: false,
-		// MaxAge indicates how long (in seconds) the results of a preflight request can be cached.
-		MaxAge: 300, // Maximum value not to exceed 600 seconds
-	})
+	r.Use(mw.CloudflareIPMiddleware)
 
 	// Using the logger middleware
 	r.Use(middleware.Logger)
 
 	// Use the CORS middleware
-	r.Use(corsMiddleware.Handler)
+	r.Use(mw.CorsMiddleware().Handler)
 
-	// Ping endpoint
-	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
-	})
+	// proxy to godocs
+	// r.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
+	// 	backendURL, _ := url.Parse("http://127.0.0.1:6060")
+	// 	pr := httputil.NewSingleHostReverseProxy(backendURL)
+	// 	pr.Director = func(req *http.Request) {
+	// 		// Update the request to point to the backend server
+	// 		req.URL.Scheme = backendURL.Scheme
+	// 		req.URL.Host = backendURL.Host
+	// 		req.Header.Set("X-Forwarded-Host", req.Host)
+	// 	}
+	// 	pr.ServeHTTP(w, r)
+	// })
 
-	r.HandleFunc("/to/301", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("301"))
-	})
+	r.HandleFunc("/", handlers.GithubPage)
 
-	r.HandleFunc("/to/302", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("302"))
-	})
-
-	r.HandleFunc("/status/200", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	r.HandleFunc("/status/201", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("Created"))
-	})
-
-	r.HandleFunc("/status/204", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-		// No content to return
-	})
-
-	r.HandleFunc("/status/301", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/to/301", http.StatusMovedPermanently)
-	})
-
-	r.HandleFunc("/status/302", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/to/302", http.StatusFound)
-	})
+	r.HandleFunc("/ping", handlers.PingHandler)
+	r.HandleFunc("/to/301", handlers.Status301RedirectHandler)
+	r.HandleFunc("/to/302", handlers.Status302RedirectHandler)
+	r.HandleFunc("/status/200", handlers.Status200Handler)
+	r.HandleFunc("/status/201", handlers.Status201Handler)
+	r.HandleFunc("/status/204", handlers.Status204Handler)
+	r.HandleFunc("/status/301", handlers.Status301Handler)
+	r.HandleFunc("/status/302", handlers.Status302Handler)
 
 	//304 Not Modified
-	r.HandleFunc("/status/304", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotModified)
-		// No content to return
-	})
-
-	r.HandleFunc("/status/400", func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-	})
+	r.HandleFunc("/status/304", handlers.Status304Handler)
+	r.HandleFunc("/status/400", handlers.Status400Handler)
 
 	// long body response
 	r.HandleFunc("/long/body/{number}", func(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +144,6 @@ func main() {
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 	})
 
-	// Cookie random endpoint
 	r.HandleFunc("/cookie/random", func(w http.ResponseWriter, r *http.Request) {
 		// Generate a random number as the cookie value
 		rand.Seed(time.Now().UnixNano())
@@ -195,7 +160,6 @@ func main() {
 		w.Write([]byte("Random cookie set"))
 	})
 
-	// Cookie random endpoint for setting a specified number of cookies
 	r.HandleFunc("/cookie/random/{number}", func(w http.ResponseWriter, r *http.Request) {
 		// Get the number from the URL parameter
 		numberStr := chi.URLParam(r, "number")
@@ -236,5 +200,4 @@ func main() {
 	fmt.Printf("HTTP Mode\n")
 	fmt.Printf("Listening on http://%s\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, r))
-
 }
