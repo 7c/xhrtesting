@@ -64,16 +64,18 @@ func main() {
 	r.HandleFunc("/", handlers.GithubPage)
 
 	r.HandleFunc("/ping", handlers.PingHandler)
-	r.HandleFunc("/to/301", handlers.Status301RedirectHandler)
-	r.HandleFunc("/to/302", handlers.Status302RedirectHandler)
+
 	r.HandleFunc("/status/200", handlers.Status200Handler)
 	r.HandleFunc("/status/201", handlers.Status201Handler)
 	r.HandleFunc("/status/204", handlers.Status204Handler)
 	r.HandleFunc("/status/301", handlers.Status301Handler)
 	r.HandleFunc("/status/302", handlers.Status302Handler)
-
 	//304 Not Modified
 	r.HandleFunc("/status/304", handlers.Status304Handler)
+
+	r.HandleFunc("/to/301", handlers.Status200Handler)
+	r.HandleFunc("/to/302", handlers.Status200Handler)
+
 	r.HandleFunc("/status/400", handlers.Status400Handler)
 
 	// long body response
