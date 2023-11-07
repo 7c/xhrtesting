@@ -15,6 +15,15 @@ server is designed to tests xhr clients and is available under https://xhrtest.c
 [/status/402](https://xhrtest.com/status/402) - returns statuscode: 402  
 [/status/403](https://xhrtest.com/status/403) - returns statuscode: 403  
 [/status/404](https://xhrtest.com/status/404) - returns statuscode: 404  
+[/status/408](https://xhrtest.com/status/408) - returns statuscode: 408  
+[/status/500](https://xhrtest.com/status/500) - returns statuscode: 500  
+[/status/501](https://xhrtest.com/status/501) - returns statuscode: 501  
+[/status/503](https://xhrtest.com/status/503) - returns statuscode: 503  
+[/long/body/{number}](https://xhrtest.com//long/body/512) - returns a long body with given number of bytes   
+[/json/random](https://xhrtest.com/json/random) - random json response  
+[/cookie/random](https://xhrtest.com/cookie/random) - response with random cookie content  
+[/cookie/random/{number}](https://xhrtest.com/cookie/random/10) - response with random cookie content at given number  
+
 
 etc... 
 
