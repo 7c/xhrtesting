@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -17,23 +16,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-resty/resty/v2"
 )
 
 var addr = flag.String("addr", ":8080", "HTTP network address")
 var tlsDomain = flag.String("tlsdomain", "", "Letsencrypt TLS Domain")
-
-func PublicIP() (string, error) {
-	client := resty.New()
-	resp, err := client.R().Get("https://ip4.ip8.com")
-	if err != nil {
-		return "", err
-	}
-	if resp.StatusCode() == 200 {
-		return string(resp.Body()), nil
-	}
-	return "", errors.New("Error: " + resp.Status())
-}
 
 func main() {
 	flag.Parse() // Parse the command line flags
@@ -186,7 +172,7 @@ func main() {
 		w.Write([]byte(fmt.Sprintf("Set %d random cookies", number)))
 	})
 
-	ip4, _ := PublicIP()
+	ip4, _ := shared.PublicIP()
 	fmt.Printf("Your external IP is : %s\n", ip4)
 
 	if *tlsDomain != "" {

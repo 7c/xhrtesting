@@ -1,11 +1,26 @@
 package shared
 
 import (
+	"errors"
 	"math/rand"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/go-resty/resty/v2"
 )
+
+func PublicIP() (string, error) {
+	client := resty.New()
+	resp, err := client.R().Get("https://ip4.ip8.com")
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode() == 200 {
+		return string(resp.Body()), nil
+	}
+	return "", errors.New("Error: " + resp.Status())
+}
 
 // Generates a random string of a given length
 func RandomString(n int) string {
